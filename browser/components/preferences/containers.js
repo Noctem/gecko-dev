@@ -35,6 +35,7 @@ let gContainersManager = {
     "pet",
     "tree",
     "chill",
+    "fence",
   ],
 
   colors: [
@@ -46,6 +47,7 @@ let gContainersManager = {
     "red",
     "pink",
     "purple",
+    "toolbar",
   ],
 
   onLoad() {
@@ -106,7 +108,7 @@ let gContainersManager = {
       document.l10n.setAttributes(iconSwatch, `containers-icon-${icon}`);
       let iconElement = document.createXULElement("hbox");
       iconElement.className = "userContext-icon";
-      iconElement.setAttribute("data-identity-icon", icon);
+      iconElement.classList.add("identity-icon-" + icon);
 
       iconSwatch.appendChild(iconElement);
       radiogroup.appendChild(iconSwatch);
@@ -134,8 +136,8 @@ let gContainersManager = {
       document.l10n.setAttributes(colorSwatch, `containers-color-${color}`);
       let iconElement = document.createXULElement("hbox");
       iconElement.className = "userContext-icon";
-      iconElement.setAttribute("data-identity-icon", "circle");
-      iconElement.setAttribute("data-identity-color", color);
+      iconElement.classList.add("identity-icon-circle");
+      iconElement.classList.add("identity-color-" + color);
 
       colorSwatch.appendChild(iconElement);
       radiogroup.appendChild(colorSwatch);
