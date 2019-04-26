@@ -408,6 +408,14 @@ pref("permissions.default.geo", 0);
 pref("permissions.default.desktop-notification", 0);
 pref("permissions.default.shortcuts", 0);
 
+pref("permissions.desktop-notification.postPrompt.enabled", false);
+
+pref("permissions.postPrompt.animate", true);
+
+// This is meant to be enabled only for studies, not for
+// permanent data collection on any channel.
+pref("permissions.eventTelemetry.enabled", false);
+
 // handle links targeting new windows
 // 1=current window/tab, 2=new window, 3=new tab in most recent window
 pref("browser.link.open_newwindow", 3);
@@ -1493,15 +1501,9 @@ pref("media.gmp-widevinecdm.visible", true);
 pref("media.gmp-widevinecdm.enabled", true);
 #endif
 
-#if defined(_ARM64_) && defined(XP_WIN)
-// Windows on ARM64, OpenH264 not available yet.
-pref("media.gmp-gmpopenh264.visible", false);
-pref("media.gmp-gmpopenh264.enabled", false);
-#else
-// Not Windows on ARM64
 pref("media.gmp-gmpopenh264.visible", true);
 pref("media.gmp-gmpopenh264.enabled", true);
-#endif
+
 // Switch block autoplay logic to v2, and enable UI.
 pref("media.autoplay.enabled.user-gestures-needed", true);
 // Set Firefox to block autoplay, asking for permission by default.

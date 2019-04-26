@@ -9478,7 +9478,7 @@ nsresult DatabaseConnection::CommitWriteTransaction() {
 void DatabaseConnection::RollbackWriteTransaction() {
   AssertIsOnConnectionThread();
   MOZ_ASSERT(!mInReadTransaction);
-  MOZ_ASSERT(mStorageConnection);
+  MOZ_DIAGNOSTIC_ASSERT(mStorageConnection);
 
   AUTO_PROFILER_LABEL("DatabaseConnection::RollbackWriteTransaction", DOM);
 
@@ -10089,6 +10089,13 @@ nsresult DatabaseConnection::AutoSavepoint::Start(
   DatabaseConnection* connection = aTransaction->GetDatabase()->GetConnection();
   MOZ_ASSERT(connection);
   connection->AssertIsOnConnectionThread();
+
+  // This is just a quick fix for preventing accessing the nullptr. The cause is
+  // probably because the connection was unexpectedly closed.
+  if (!connection->GetUpdateRefcountFunction()) {
+    NS_WARNING("The connection was closed for some reasons!");
+    return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
+  }
 
   MOZ_ASSERT(!mConnection);
   MOZ_ASSERT(!mDEBUGTransaction);
@@ -11090,8 +11097,8 @@ void ConnectionPool::ShutdownThread(ThreadInfo& aThreadInfo) {
   // This should clean up the thread with the profiler.
   MOZ_ALWAYS_SUCCEEDS(thread->Dispatch(runnable.forget(), NS_DISPATCH_NORMAL));
 
-  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(
-      NewRunnableMethod("nsIThread::Shutdown", thread, &nsIThread::Shutdown)));
+  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(NewRunnableMethod(
+      "nsIThread::AsyncShutdown", thread, &nsIThread::AsyncShutdown)));
 
   mTotalThreadCount--;
 }

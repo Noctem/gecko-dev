@@ -14,7 +14,31 @@ XPCOMUtils.defineLazyServiceGetter(
   "nsIToolkitProfileService"
 );
 
-function refreshUI() {
+async function flush() {
+  try {
+    ProfileService.flush();
+    rebuildProfileList();
+  } catch (e) {
+    let [title, msg, button] = await document.l10n.formatValues([
+      { id: "profiles-flush-fail-title" },
+      { id: e.result == Cr.NS_ERROR_DATABASE_CHANGED ?
+                        "profiles-flush-conflict" :
+                        "profiles-flush-failed" },
+      { id: "profiles-flush-restart-button" },
+    ]);
+
+    const PS = Ci.nsIPromptService;
+    let result = Services.prompt.confirmEx(window, title, msg,
+                                          (PS.BUTTON_POS_0 * PS.BUTTON_TITLE_CANCEL) +
+                                          (PS.BUTTON_POS_1 * PS.BUTTON_TITLE_IS_STRING),
+                                          null, button, null, null, {});
+    if (result == 1) {
+      restart(false);
+    }
+  }
+}
+
+function rebuildProfileList() {
   let parent = document.getElementById("profiles");
   while (parent.firstChild) {
     parent.firstChild.remove();
@@ -48,19 +72,6 @@ function refreshUI() {
       isInUse,
     });
   }
-
-  let createButton = document.getElementById("create-button");
-  createButton.onclick = createProfileWizard;
-
-  let restartSafeModeButton = document.getElementById("restart-in-safe-mode-button");
-  if (!Services.policies || Services.policies.isAllowed("safeMode")) {
-    restartSafeModeButton.onclick = function() { restart(true); };
-  } else {
-    restartSafeModeButton.setAttribute("disabled", "true");
-  }
-
-  let restartNormalModeButton = document.getElementById("restart-button");
-  restartNormalModeButton.onclick = function() { restart(false); };
 }
 
 function display(profileData) {
@@ -210,8 +221,7 @@ async function renameProfile(profile) {
       return;
     }
 
-    ProfileService.flush();
-    refreshUI();
+    flush();
   }
 }
 
@@ -280,14 +290,13 @@ async function removeProfile(profile) {
     return;
   }
 
-  ProfileService.flush();
-  refreshUI();
+  flush();
 }
 
 async function defaultProfile(profile) {
   try {
     ProfileService.defaultProfile = profile;
-    ProfileService.flush();
+    flush();
   } catch (e) {
     // This can happen on dev-edition.
     let [title, msg] = await document.l10n.formatValues([
@@ -297,7 +306,6 @@ async function defaultProfile(profile) {
 
     Services.prompt.alert(window, title, msg);
   }
-  refreshUI();
 }
 
 function openProfile(profile) {
@@ -331,5 +339,23 @@ function restart(safeMode) {
 }
 
 window.addEventListener("DOMContentLoaded", function() {
-  refreshUI();
+  let createButton = document.getElementById("create-button");
+  createButton.addEventListener("click", createProfileWizard);
+
+  let restartSafeModeButton = document.getElementById("restart-in-safe-mode-button");
+  if (!Services.policies || Services.policies.isAllowed("safeMode")) {
+    restartSafeModeButton.addEventListener("click", () => { restart(true); });
+  } else {
+    restartSafeModeButton.setAttribute("disabled", "true");
+  }
+
+  let restartNormalModeButton = document.getElementById("restart-button");
+  restartNormalModeButton.addEventListener("click", () => { restart(false); });
+
+  if (ProfileService.isListOutdated) {
+    document.getElementById("owned").hidden = true;
+  } else {
+    document.getElementById("conflict").hidden = true;
+    rebuildProfileList();
+  }
 }, {once: true});

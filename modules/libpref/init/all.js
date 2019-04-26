@@ -466,6 +466,8 @@ pref("media.navigator.mediadatadecoder_vpx_enabled", false);
 #endif
 #if defined(ANDROID)
 pref("media.navigator.mediadatadecoder_h264_enabled", false); // bug 1509316
+#elif defined(_ARM64_) && defined(XP_WIN)
+pref("media.navigator.mediadatadecoder_h264_enabled", false);
 #else
 pref("media.navigator.mediadatadecoder_h264_enabled", true);
 #endif
@@ -4816,9 +4818,9 @@ pref("image.animated.resume-from-last-displayed", true);
 // same data at different sizes.
 pref("image.cache.factor2.threshold-surfaces", 4);
 
-// Maximum number of pixels in either dimension that we are willing to upscale
-// an SVG to when we are in "factor of 2" mode.
-pref("image.cache.max-rasterized-svg-threshold-kb", 92160);
+// Maximum size of a surface in KB we are willing to produce when rasterizing
+// an SVG.
+pref("image.cache.max-rasterized-svg-threshold-kb", 204800);
 
 // The maximum size, in bytes, of the decoded images we cache
 pref("image.cache.size", 5242880);
